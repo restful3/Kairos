@@ -1,6 +1,6 @@
-# Kairos - 실시간 퀀트 트레이딩 플랫폼 (프론트엔드)
+# Kairos - 헤르메스(Hermes) | 실시간 퀀트 트레이딩 플랫폼 (프론트엔드)
 
-이 프로젝트는 Kairos 퀀트 트레이딩 플랫폼의 프론트엔드 부분으로, Streamlit을 사용하여 개발되었습니다. Kairos는 그리스어로 '적절한 시기'를 의미하며, 트레이딩에서 가장 중요한 타이밍의 개념을 담고 있습니다.
+이 프로젝트는 Kairos 퀀트 트레이딩 플랫폼의 프론트엔드 부분인 '헤르메스(Hermes)'입니다. Streamlit을 사용하여 개발되었습니다. Kairos는 그리스어로 '적절한 시기'를 의미하며, 트레이딩에서 가장 중요한 타이밍의 개념을 담고 있습니다. 헤르메스는 그리스 신화의 전령의 신으로, 사용자와 시스템 간의 소통을 담당하는 프론트엔드의 역할을 상징합니다.
 
 ## 기능
 
@@ -18,13 +18,18 @@
 
 ```bash
 # 가상환경 생성 (위치는 사용자 선택)
-python -m venv ~/.venvs/kairos-frontend  
+python -m venv ~/.venvs/hermes  
+
+# 또는 아나콘다/미니콘다 환경 사용
+conda create -n hermes python=3.10 -y
 
 # 가상환경 활성화 (Linux/Mac)
-source ~/.venvs/kairos-frontend/bin/activate
+source ~/.venvs/hermes/bin/activate
+# 또는 아나콘다/미니콘다 환경 활성화
+conda activate hermes
 
 # 가상환경 활성화 (Windows)
-# .\~\.venvs\kairos-frontend\Scripts\activate.bat
+# .\~\.venvs\hermes\Scripts\activate.bat
 
 # 의존성 패키지 설치
 pip install -r requirements.txt

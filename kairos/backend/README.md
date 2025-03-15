@@ -1,6 +1,6 @@
-# Kairos - 실시간 퀀트 트레이딩 플랫폼 (백엔드)
+# Kairos - 아트라스(Atlas) | 실시간 퀀트 트레이딩 플랫폼 (백엔드)
 
-이 프로젝트는 Kairos 퀀트 트레이딩 플랫폼의 백엔드 부분으로, FastAPI를 사용하여 개발되었습니다. Kairos는 그리스어로 '적절한 시기'를 의미하며, 트레이딩에서 가장 중요한 타이밍의 개념을 담고 있습니다.
+이 프로젝트는 Kairos 퀀트 트레이딩 플랫폼의 백엔드 부분인 '아트라스(Atlas)'입니다. FastAPI를 사용하여 개발되었습니다. Kairos는 그리스어로 '적절한 시기'를 의미하며, 트레이딩에서 가장 중요한 타이밍의 개념을 담고 있습니다. 아트라스는 그리스 신화에서 하늘을 떠받치는 타이탄으로, 전체 시스템의 기반을 지지하는 백엔드의 역할을 상징합니다.
 
 ## 기능
 
@@ -19,13 +19,18 @@
 
 ```bash
 # 가상환경 생성 (위치는 사용자 선택)
-python -m venv ~/.venvs/kairos-backend
+python -m venv ~/.venvs/atlas
+
+# 또는 아나콘다/미니콘다 환경 사용
+conda create -n atlas python=3.10 -y
 
 # 가상환경 활성화 (Linux/Mac)
-source ~/.venvs/kairos-backend/bin/activate
+source ~/.venvs/atlas/bin/activate
+# 또는 아나콘다/미니콘다 환경 활성화
+conda activate atlas
 
 # 가상환경 활성화 (Windows)
-# .\~\.venvs\kairos-backend\Scripts\activate.bat
+# .\~\.venvs\atlas\Scripts\activate.bat
 
 # 의존성 패키지 설치
 pip install -r requirements.txt
