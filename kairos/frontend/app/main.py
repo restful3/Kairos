@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from app.utils.session import init_session_state, is_logged_in
 from app.pages.login import show as show_login
 from app.pages.account import show as show_account
+from app.pages.stocks import show as show_stocks
 
 # 환경 변수 로드
 load_dotenv()
@@ -34,7 +35,7 @@ def main():
             # 네비게이션 메뉴
             menu = st.radio(
                 "메뉴",
-                options=["계좌 정보", "자동 매매 설정", "거래 내역", "도움말"],
+                options=["계좌 정보", "종목 검색", "자동 매매 설정", "거래 내역", "도움말"],
                 index=0
             )
             
@@ -57,6 +58,8 @@ def main():
         show_login()
     elif menu == "계좌 정보":
         show_account()
+    elif menu == "종목 검색":
+        show_stocks()
     elif menu == "자동 매매 설정":
         st.title("자동 매매 설정")
         st.info("자동 매매 설정 페이지는 개발 중입니다.")
@@ -73,8 +76,9 @@ def main():
         ### 사용 방법
         1. 로그인 페이지에서 사용자 아이디와 비밀번호를 입력합니다.
         2. 계좌 정보 페이지에서 현재 보유 주식과 잔고를 확인합니다.
-        3. 자동 매매 설정 페이지에서 자동 매매 규칙을 설정합니다.
-        4. 거래 내역 페이지에서 과거 거래 내역을 확인합니다.
+        3. 종목 검색 페이지에서 투자할 종목을 검색하고 포트폴리오에 추가합니다.
+        4. 자동 매매 설정 페이지에서 자동 매매 규칙을 설정합니다.
+        5. 거래 내역 페이지에서 과거 거래 내역을 확인합니다.
         
         ### 주의사항
         - 실제 자산이 거래되므로 신중하게 사용하세요.

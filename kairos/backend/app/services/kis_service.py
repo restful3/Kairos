@@ -236,4 +236,92 @@ class KisService:
                 }
         except Exception as e:
             print(f"잔고 정보 처리 중 오류 발생: {str(e)}")
-            return {"error": str(e)} 
+            return {"error": str(e)}
+    
+    def get_stock_price(self, code: str) -> Dict[str, Any]:
+        """
+        종목 현재가 조회
+        
+        Args:
+            code: 종목코드
+            
+        Returns:
+            종목 현재가 정보
+        """
+        self.ensure_token()
+        
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "authorization": f"Bearer {self.token}",
+            "appKey": self.app_key,
+            "appSecret": self.app_secret,
+            "tr_id": "FHKST01010100"
+        }
+        
+        params = {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": code
+        }
+        
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get("rt_cd") == "0":  # 성공
+                    output = data.get("output", {})
+                    
+                    # 기본 정보 추출
+                    current_price = int(output.get("stck_prpr", "0"))  # 현재가
+                    price_change = int(output.get("prdy_vrss", "0"))  # 전일 대비
+                    change_rate = float(output.get("prdy_ctrt", "0"))  # 전일 대비율
+                    volume = int(output.get("acml_vol", "0"))  # 거래량
+                    high_price = int(output.get("stck_hgpr", "0"))  # 고가
+                    low_price = int(output.get("stck_lwpr", "0"))  # 저가
+                    open_price = int(output.get("stck_oprc", "0"))  # 시가
+                    prev_close = int(output.get("prdy_clpr", "0"))  # 전일 종가
+                    
+                    # 추가 정보 계산
+                    market_cap = current_price * int(output.get("lstn_stcn", "0"))  # 시가총액 = 현재가 * 상장주식수
+                    
+                    # 52주 최고/최저 (별도 API 호출이 필요할 수 있음, 임시 데이터)
+                    high_52wk = int(output.get("w52_hgpr", "0"))  # 52주 최고가
+                    low_52wk = int(output.get("w52_lwpr", "0"))  # 52주 최저가
+                    
+                    # PER, PBR (별도 API 호출이 필요할 수 있음, 임시 데이터)
+                    per = float(output.get("per", "0"))
+                    pbr = float(output.get("pbr", "0"))
+                    
+                    # 상장주식수
+                    listed_shares = int(output.get("lstn_stcn", "0"))
+                    
+                    result = {
+                        "current_price": current_price,
+                        "price_change": price_change,
+                        "change_rate": change_rate,
+                        "volume": volume,
+                        "high_price": high_price,
+                        "low_price": low_price,
+                        "open_price": open_price,
+                        "prev_close": prev_close,
+                        "market_cap": market_cap,
+                        "high_52wk": high_52wk if high_52wk > 0 else high_price,
+                        "low_52wk": low_52wk if low_52wk > 0 else low_price,
+                        "per": per,
+                        "pbr": pbr,
+                        "listed_shares": listed_shares
+                    }
+                    
+                    return result
+                else:
+                    print(f"API 호출 실패: {data.get('msg1')}")
+                    return {}
+            else:
+                print(f"API 호출 실패: {response.status_code}")
+                return {}
+        except Exception as e:
+            print(f"종목 현재가 조회 중 오류: {str(e)}")
+            return {} 
