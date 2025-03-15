@@ -67,25 +67,76 @@ def show():
     # 검색 입력 부분
     st.markdown('<div class="section-header">종목명 또는 종목코드로 검색</div>', unsafe_allow_html=True)
     
+    # 세션 상태 초기화
+    if "stock_tab_index" not in st.session_state:
+        st.session_state.stock_tab_index = 0  # 기본 탭은 "검색 결과"(0번 인덱스)
+    
+    if "search_triggered" not in st.session_state:
+        st.session_state.search_triggered = False
+    
     # 검색 필드와 버튼
     search_col1, search_col2 = st.columns([4, 1])
     
     with search_col1:
-        query = st.text_input("검색어", placeholder="예: 삼성전자, 005930", label_visibility="collapsed")
+        # 엔터키 처리를 위한 콜백 함수
+        def on_search_input_change():
+            if st.session_state.search_input and st.session_state.search_input.strip():
+                # 검색어가 있으면 "검색 결과" 탭으로 전환
+                st.session_state.stock_tab_index = 0
+                st.session_state.search_triggered = True
+        
+        query = st.text_input("검색어", placeholder="예: 삼성전자, 005930", 
+                             label_visibility="collapsed", 
+                             key="search_input",
+                             on_change=on_search_input_change)
     
     with search_col2:
-        search_clicked = st.button("검색", key="search_button", use_container_width=True)
+        # 검색 버튼 클릭 처리
+        def on_search_button_click():
+            if query and query.strip():
+                # 검색어가 있으면 "검색 결과" 탭으로 전환
+                st.session_state.stock_tab_index = 0
+                st.session_state.search_triggered = True
+                # 페이지 강제 재실행으로 탭 변경 즉시 반영
+                st.rerun()
+        
+        search_clicked = st.button("검색", key="search_button", 
+                                 use_container_width=True,
+                                 on_click=on_search_button_click)
+    
+    # 엔터키로 검색 실행 시 탭 전환을 위한 강제 재실행
+    if st.session_state.get("search_triggered", False) and st.session_state.stock_tab_index == 0:
+        # 검색어가 있고 검색이 트리거되었으면 재실행
+        if query and query.strip():
+            st.session_state.search_triggered = False  # 플래그 초기화
+            st.rerun()  # 페이지 재실행으로 탭 변경 반영
     
     # 탭 생성
     tab_names = ["검색 결과", "업종별 종목", "인기 종목"]
     
-    # 탭 선택 UI
-    selected_tab = st.radio("주식 탭 선택", tab_names, horizontal=True, label_visibility="collapsed")
+    # 탭 선택 UI - 탭 설정 개선
+    # key에 값이 바뀌는 session_state를 사용하지 않고 고정 문자열 사용
+    selected_tab_index = st.session_state.stock_tab_index
+    selected_tab = st.radio(
+        "주식 탭 선택", 
+        tab_names, 
+        index=selected_tab_index,
+        horizontal=True, 
+        label_visibility="collapsed",
+        key="stock_tabs_radio"  # 고정된 key 사용
+    )
+    
+    # 탭 선택이 변경되었는지 확인
+    if tab_names.index(selected_tab) != st.session_state.stock_tab_index:
+        st.session_state.stock_tab_index = tab_names.index(selected_tab)
+        st.rerun()  # 탭 변경 시 재실행하여 UI 즉시 업데이트
     
     # 선택된 탭에 따라 내용 표시
     if selected_tab == "검색 결과":
         if query:
             show_search_results(query)
+            # 검색 수행 후 플래그 초기화
+            st.session_state.search_triggered = False
         else:
             # 검색어가 없을 때는 인기 종목을 표시하지 않고 검색 안내 메시지만 표시
             st.info("종목명 또는 종목코드를 입력하고 검색 버튼을 클릭하세요.")
