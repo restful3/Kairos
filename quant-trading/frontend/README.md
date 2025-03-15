@@ -37,8 +37,19 @@ pip install -r requirements.txt
 ```
 # API 서버 설정
 API_URL=http://localhost:8000/api
-KIS_APP_KEY=your_app_key_here
-KIS_APP_SECRET=your_app_secret_here
+```
+
+`.env.example` 파일을 참고하여 필요한 환경 변수를 설정하세요.
+
+**우분투 환경에서 .env 파일 생성 방법:**
+
+```bash
+# nano 에디터로 .env 파일 생성 및 편집
+nano .env
+
+# 편집 후 Ctrl+O를 눌러 저장, Ctrl+X로 나가기
+# 또는 다음 명령으로 한 번에 생성
+echo "API_URL=http://localhost:8000/api" > .env
 ```
 
 ### 3. 실행
@@ -46,15 +57,40 @@ KIS_APP_SECRET=your_app_secret_here
 가상환경이 활성화된 상태에서 다음 명령어로 프론트엔드 서버를 실행합니다:
 
 ```bash
+# 첫 번째 방법 (권장) - run.py 스크립트 사용
 python run.py
+
+# 또는 다음 명령으로 스크립트 파일에 실행 권한 부여 후 직접 실행
+chmod +x run.py
+./run.py
+
+# 두 번째 방법 - Streamlit 직접 실행
+streamlit run app/main.py
 ```
 
 기본적으로 서버는 http://localhost:8501 에서 실행됩니다.
 
+### 4. 우분투 환경에서 포트 개방
+
+방화벽이 활성화된 우분투 서버에서 실행하는 경우, 필요한 포트를 개방해야 합니다:
+
+```bash
+# Streamlit 서버 포트(8501) 개방
+sudo ufw allow 8501/tcp
+
+# 방화벽 상태 확인
+sudo ufw status
+
+# 방화벽이 비활성화된 경우 활성화
+sudo ufw enable
+```
+
+클라우드 서버(AWS, GCP 등)에서 실행하는 경우, 해당 클라우드 서비스의 보안 그룹/방화벽 설정에서도 포트를 개방해야 합니다.
+
 ## 사용 방법
 
 1. 브라우저에서 http://localhost:8501 에 접속합니다.
-2. 로그인 페이지에서 한국투자증권 앱키와 시크릿을 입력합니다.
+2. 로그인 페이지에서 사용자 계정으로 로그인합니다.
 3. 로그인 후 계좌 정보 페이지에서 보유 종목과 계좌 잔고를 확인할 수 있습니다.
 
 ## 프로젝트 구조

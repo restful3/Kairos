@@ -35,16 +35,87 @@ pip install -r requirements.txt
 
 `.env` 파일을 프로젝트 루트 디렉토리에 생성하고 필요한 환경 변수를 설정합니다. `.env.example` 파일을 참고하세요.
 
-### 3. 실행
+**우분투 환경에서 .env 파일 생성 방법:**
+
+```bash
+# nano 에디터로 .env 파일 생성 및 편집
+nano .env
+
+# 편집 후 Ctrl+O를 눌러 저장, Ctrl+X로 나가기
+# 또는 .env.example을 복사해서 설정
+cp .env.example .env
+nano .env  # 값을 수정하세요
+```
+
+### 3. 사용자 관리 (admin.py)
+
+백엔드는 사용자 관리를 위한 별도의 CLI 도구(`admin.py`)를 제공합니다. 이 도구를 사용하여 새로운 사용자를 등록하거나, 비밀번호를 변경하거나, 사용자를 삭제할 수 있습니다.
+
+```bash
+# 가상환경 활성화 상태에서 실행
+
+# 사용자 생성
+python admin.py create -u 사용자명
+# 관리자 사용자 생성
+python admin.py create -u 관리자명 --admin
+
+# 비밀번호 변경
+python admin.py passwd -u 사용자명
+
+# 사용자 삭제
+python admin.py delete -u 사용자명
+
+# 사용자 목록 조회
+python admin.py list
+```
+
+특정 명령어에 대한 도움말은 다음과 같이 확인할 수 있습니다:
+
+```bash
+# 전체 명령어 도움말
+python admin.py --help
+
+# 특정 명령어 도움말 (예: create)
+python admin.py create --help
+```
+
+사용자 데이터는 `~/.quant_trading_backend/users.json` 파일에 안전하게 저장됩니다. 비밀번호는 PBKDF2 알고리즘과 SHA-256 해시 함수를 사용하여 안전하게 해싱됩니다.
+
+### 4. 실행
 
 가상환경이 활성화된 상태에서 다음 명령어로 백엔드 서버를 실행합니다:
 
 ```bash
+# 첫 번째 방법 (권장) - run.py 스크립트 사용
+python run.py
+
+# 또는 다음 명령으로 스크립트 파일에 실행 권한 부여 후 직접 실행
+chmod +x run.py
+./run.py
+
+# 두 번째 방법 - uvicorn 직접 실행
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 기본적으로 서버는 http://localhost:8000 에서 실행됩니다.
 API 문서는 http://localhost:8000/api/docs 에서 확인할 수 있습니다.
+
+### 5. 우분투 환경에서 포트 개방
+
+방화벽이 활성화된 우분투 서버에서 실행하는 경우, 필요한 포트를 개방해야 합니다:
+
+```bash
+# FastAPI 서버 포트(8000) 개방
+sudo ufw allow 8000/tcp
+
+# 방화벽 상태 확인
+sudo ufw status
+
+# 방화벽이 비활성화된 경우 활성화
+sudo ufw enable
+```
+
+클라우드 서버(AWS, GCP 등)에서 실행하는 경우, 해당 클라우드 서비스의 보안 그룹/방화벽 설정에서도 포트를 개방해야 합니다.
 
 ## 프로젝트 구조
 
@@ -58,7 +129,9 @@ backend/
 │   ├── services/      # 비즈니스 로직
 │   └── utils/         # 유틸리티 함수
 ├── .env               # 환경 변수 파일
+├── admin.py           # 사용자 관리 CLI 도구
 ├── main.py            # 애플리케이션 엔트리 포인트
+├── run.py             # 실행 스크립트
 └── requirements.txt   # 필요한 패키지 목록
 ```
 
