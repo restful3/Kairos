@@ -324,4 +324,72 @@ class KisService:
                 return {}
         except Exception as e:
             print(f"종목 현재가 조회 중 오류: {str(e)}")
-            return {} 
+            return {}
+    
+    def get_daily_price(self, code: str, start_date: str = None, end_date: str = None) -> List[Dict[str, Any]]:
+        """
+        종목 일별 시세 조회
+        
+        Args:
+            code: 종목코드
+            start_date: 조회 시작일(YYYYMMDD)
+            end_date: 조회 종료일(YYYYMMDD)
+            
+        Returns:
+            일별 시세 데이터 목록
+        """
+        self.ensure_token()
+        
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-daily-price"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "authorization": f"Bearer {self.token}",
+            "appKey": self.app_key,
+            "appSecret": self.app_secret,
+            "tr_id": "FHKST01010400"  # 국내주식 일별 시세 조회
+        }
+        
+        params = {
+            "FID_COND_MRKT_DIV_CODE": "J",  # 시장구분: 주식
+            "FID_INPUT_ISCD": code,
+            "FID_PERIOD_DIV_CODE": "D",  # 일봉
+            "FID_ORG_ADJ_PRC": "1"  # 수정주가 적용
+        }
+        
+        if start_date:
+            params["FID_FROM_DT"] = start_date
+        if end_date:
+            params["FID_TO_DT"] = end_date
+        
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get("rt_cd") == "0":  # 성공
+                    output = data.get("output", [])
+                    result = []
+                    
+                    for item in output:
+                        result.append({
+                            "stck_bsop_date": item.get("stck_bsop_date"),  # 주식 영업 일자
+                            "stck_oprc": int(item.get("stck_oprc", "0")),  # 시가
+                            "stck_hgpr": int(item.get("stck_hgpr", "0")),  # 고가
+                            "stck_lwpr": int(item.get("stck_lwpr", "0")),  # 저가
+                            "stck_clpr": int(item.get("stck_clpr", "0")),  # 종가
+                            "acml_vol": int(item.get("acml_vol", "0")),    # 거래량
+                            "acml_tr_pbmn": int(item.get("acml_tr_pbmn", "0"))  # 거래대금
+                        })
+                    
+                    return result
+                else:
+                    print(f"API 호출 실패: {data.get('msg1')}")
+                    return []
+            else:
+                print(f"API 호출 실패: {response.status_code}")
+                return []
+        except Exception as e:
+            print(f"종목 일별 시세 조회 중 오류: {str(e)}")
+            return [] 

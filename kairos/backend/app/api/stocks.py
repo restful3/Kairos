@@ -72,4 +72,22 @@ async def get_stocks_by_sector(
         results = stock_service.get_stocks_by_sector(sector, limit)
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"업종별 종목 조회 중 오류 발생: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"업종별 종목 조회 중 오류 발생: {str(e)}")
+
+@router.get("/{code}/daily")
+async def get_stock_daily_prices(
+    code: str,
+    start_date: str = Query(None, description="조회 시작일(YYYYMMDD)"),
+    end_date: str = Query(None, description="조회 종료일(YYYYMMDD)"),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> List[Dict[str, Any]]:
+    """
+    종목 일별 시세 조회 API
+    
+    특정 종목의 일별 가격 데이터를 조회합니다.
+    """
+    try:
+        results = stock_service.get_stock_daily_prices(code, start_date, end_date)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"종목 일별 시세 조회 중 오류 발생: {str(e)}") 

@@ -4,6 +4,7 @@ import json
 from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 from app.utils.token_store import save_token, load_token, delete_token
+from datetime import datetime, timedelta
 
 # 환경 변수 로드
 load_dotenv()
@@ -22,6 +23,7 @@ STOCKS_SEARCH_ENDPOINT = f"{API_URL}/stocks/search"
 STOCK_DETAIL_ENDPOINT = f"{API_URL}/stocks"
 STOCKS_SECTOR_ENDPOINT = f"{API_URL}/stocks/sector"
 STOCKS_POPULAR_ENDPOINT = f"{API_URL}/stocks/popular"
+STOCK_DAILY_ENDPOINT = f"{API_URL}/stocks/{{}}/daily"  # 일별 시세 조회 엔드포인트
 
 class ApiClient:
     """백엔드 API 호출을 위한 클라이언트"""
@@ -335,6 +337,52 @@ class ApiClient:
                 raise Exception(f"인기 종목 조회 실패: {error_msg}")
         except Exception as e:
             raise Exception(f"인기 종목 조회 중 오류 발생: {str(e)}")
+    
+    def get_stock_history(self, code: str, days: int = 90) -> List[Dict[str, Any]]:
+        """
+        종목의 일별 시세 데이터 조회
+        
+        Args:
+            code: 종목코드
+            days: 조회 기간(일)
+            
+        Returns:
+            일별 시세 데이터 목록
+            
+        Raises:
+            Exception: API 호출 실패시 예외 발생
+        """
+        if not self.token:
+            raise Exception("로그인이 필요합니다.")
+            
+        try:
+            # 현재 날짜와 시작 날짜 계산
+            end_date = datetime.now().strftime("%Y%m%d")
+            start_date = (datetime.now() - timedelta(days=days)).strftime("%Y%m%d")
+            
+            # 실제 API 호출
+            endpoint = STOCK_DAILY_ENDPOINT.format(code)
+            params = {
+                "start_date": start_date,
+                "end_date": end_date
+            }
+            
+            print(f"[DEBUG] 주가 데이터 조회: {endpoint} | 기간: {days}일")
+            
+            response = requests.get(
+                endpoint,
+                headers={"Authorization": f"Bearer {self.token}"},
+                params=params
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result
+            else:
+                error_msg = response.json().get("detail", "주가 데이터 조회 실패")
+                raise Exception(f"주가 데이터 조회 실패: {error_msg}")
+        except Exception as e:
+            raise Exception(f"주가 데이터 조회 중 오류 발생: {str(e)}")
 
 # API 클라이언트 인스턴스 생성 (싱글톤)
 api_client = ApiClient() 

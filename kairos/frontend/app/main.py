@@ -6,6 +6,8 @@ from app.utils.session import init_session_state, is_logged_in
 from app.pages.login import show as show_login
 from app.pages.account import show as show_account
 from app.pages.stocks import show as show_stocks
+from app.pages.strategy_builder import show as show_strategy_builder
+from app.pages.backtest import show as show_backtest
 
 # 환경 변수 로드
 load_dotenv()
@@ -24,6 +26,24 @@ def main():
     # 세션 초기화
     init_session_state()
     
+    # 페이지 자동 이동 처리
+    page_to_navigate = st.session_state.get("page", None)
+    if page_to_navigate and is_logged_in():
+        # 페이지 이동 후 상태 초기화
+        current_page = page_to_navigate
+        del st.session_state.page
+        
+        # 메뉴 선택 상태 업데이트
+        if current_page == "백테스팅":
+            st.session_state.menu_index = 3  # 백테스팅 메뉴 인덱스
+        elif current_page == "전략 생성":
+            st.session_state.menu_index = 2  # 전략 생성 메뉴 인덱스
+        else:
+            st.session_state.menu_index = 0  # 기본 메뉴 인덱스
+    
+    # 항상 현재 메뉴 인덱스 설정 (이전 상태 유지 또는 기본값)
+    current_menu_index = st.session_state.get("menu_index", 0)
+    
     # 사이드바 메뉴
     with st.sidebar:
         st.title("Kairos")
@@ -33,11 +53,17 @@ def main():
         # 로그인 상태에 따라 메뉴 표시
         if is_logged_in():
             # 네비게이션 메뉴
+            menu_options = ["계좌 정보", "종목 검색", "전략 생성", "백테스팅", "거래 내역", "도움말"]
+            
+            # 메뉴 선택
             menu = st.radio(
                 "메뉴",
-                options=["계좌 정보", "종목 검색", "자동 매매 설정", "거래 내역", "도움말"],
-                index=0
+                options=menu_options,
+                index=current_menu_index
             )
+            
+            # 메뉴 선택 상태 저장
+            st.session_state.menu_index = menu_options.index(menu)
             
             # 로그아웃 버튼
             if st.button("로그아웃", use_container_width=True):
@@ -60,9 +86,10 @@ def main():
         show_account()
     elif menu == "종목 검색":
         show_stocks()
-    elif menu == "자동 매매 설정":
-        st.title("자동 매매 설정")
-        st.info("자동 매매 설정 페이지는 개발 중입니다.")
+    elif menu == "전략 생성":
+        show_strategy_builder()
+    elif menu == "백테스팅":
+        show_backtest()
     elif menu == "거래 내역":
         st.title("거래 내역")
         st.info("거래 내역 페이지는 개발 중입니다.")
