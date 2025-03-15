@@ -1,0 +1,57 @@
+# Excel 파일
+rest/한국투자증권 오픈API엑셀_샘플(국내주식시세주문).xlsm
+rest/vba_sample.xlsm
+*.xlsx
+*.xls
+*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+virtualenv/
+.venv
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# 임시 파일
+*.tmp
+*.bak
+*.backup
+*~
+
+# 데이터베이스
+*.db
+*.sqlite3
+
+# 빌드 결과물
+dist/
+build/
+*.egg-info/
