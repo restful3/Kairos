@@ -225,7 +225,9 @@ def display_stock_table(stocks: List[Dict[str, Any]], key_suffix: str = "default
             df['시가총액'] = df['시가총액'].apply(lambda x: f"{x/100000000:,.0f}억")
         
         # 테이블 표시
-        st.dataframe(df, height=400, use_container_width=True, hide_index=True)
+        # 각 행의 높이를 35픽셀로 계산하고 헤더를 위해 40픽셀 추가
+        table_height = min(len(df) * 35 + 40, 600)  # 최대 높이는 600픽셀로 제한
+        st.dataframe(df, height=table_height, use_container_width=True, hide_index=True)
         
         # 종목 선택 UI
         st.markdown("<p>👇 종목 선택</p>", unsafe_allow_html=True)
