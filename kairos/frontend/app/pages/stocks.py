@@ -18,122 +18,100 @@ def load_css():
     st.markdown("""
     <style>
     .block-container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
     }
-    
-    .section-header {
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
-        font-weight: bold;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.5rem;
+    .small-font {
+        font-size: 0.8rem;
     }
-    
-    .info-card {
-        background-color: #f9f9f9;
-        border-radius: 5px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    .stock-price-up {
+        color: #f63366;
     }
-    
-    .positive { color: #e63946; }
-    .negative { color: #1d3557; }
+    .stock-price-down {
+        color: #0068c9;
+    }
+    .stock-price-same {
+        color: #808495;
+    }
+    .search-btn {
+        background-color: #4CAF50;
+        color: white;
+    }
     </style>
     """, unsafe_allow_html=True)
 
+# 주식 정보 페이지 메인 함수
 def show():
-    """종목 검색 페이지 표시"""
-    # CSS 스타일 로드
+    """주식 정보 페이지를 표시합니다"""
+    # 스타일 로드
     load_css()
     
-    if not is_logged_in():
-        st.error("종목 검색을 위해서는 먼저 로그인이 필요합니다.")
-        return
-    
-    st.title("종목 검색")
-    
-    # 검색 입력 부분
-    st.markdown('<div class="section-header">종목명 또는 종목코드로 검색</div>', unsafe_allow_html=True)
+    st.title("주식 시세 조회")
     
     # 세션 상태 초기화
-    if "stock_tab_index" not in st.session_state:
-        st.session_state.stock_tab_index = 0  # 기본 탭은 "검색 결과"(0번 인덱스)
+    if 'stock_code' not in st.session_state:
+        st.session_state.stock_code = ""
     
-    if "search_triggered" not in st.session_state:
-        st.session_state.search_triggered = False
+    if 'stock_search_query' not in st.session_state:
+        st.session_state.stock_search_query = ""
     
-    # 검색 필드와 버튼
-    search_col1, search_col2 = st.columns([4, 1])
+    # 종목 검색 섹션
+    st.subheader("종목 검색")
     
-    with search_col1:
-        # 엔터키 처리를 위한 콜백 함수
+    # 검색 입력란과 버튼
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
         def on_search_input_change():
-            if st.session_state.search_input and st.session_state.search_input.strip():
-                # 검색어가 있으면 "검색 결과" 탭으로 전환
-                st.session_state.stock_tab_index = 0
-                st.session_state.search_triggered = True
-        
-        query = st.text_input("검색어", placeholder="예: 삼성전자, 005930", 
-                              label_visibility="collapsed",
-                             key="search_input",
-                             on_change=on_search_input_change)
+            # 검색어를 업데이트하고 선택된 종목 코드는 초기화
+            st.session_state.stock_search_query = st.session_state.search_input
+            if st.session_state.search_input == "":
+                st.session_state.stock_code = ""
+
+        search_input = st.text_input(
+            "종목명 또는 코드를 입력하세요",
+            value=st.session_state.stock_search_query,
+            key="search_input",
+            on_change=on_search_input_change
+        )
     
-    with search_col2:
-        # 검색 버튼 클릭 처리
+    with col2:
         def on_search_button_click():
-            if query and query.strip():
-                # 검색어가 있으면 "검색 결과" 탭으로 전환
-                st.session_state.stock_tab_index = 0
-                st.session_state.search_triggered = True
-                # 페이지 강제 재실행으로 탭 변경 즉시 반영
-                st.rerun()
+            # 검색 버튼 클릭 시 검색어 업데이트
+            st.session_state.stock_search_query = st.session_state.search_input
         
-        search_clicked = st.button("검색", key="search_button", 
-                                 use_container_width=True,
-                                 on_click=on_search_button_click)
+        st.text("")  # 높이 조절을 위한 빈 줄
+        search_button = st.button("검색", key="search_button", on_click=on_search_button_click, type="primary")
     
-    # 엔터키로 검색 실행 시 탭 전환을 위한 강제 재실행
-    if st.session_state.get("search_triggered", False) and st.session_state.stock_tab_index == 0:
-        # 검색어가 있고 검색이 트리거되었으면 재실행
-        if query and query.strip():
-            st.session_state.search_triggered = False  # 플래그 초기화
-            st.rerun()  # 페이지 재실행으로 탭 변경 반영
+    # 검색어가 있는 경우 검색 결과 표시
+    query = st.session_state.stock_search_query
+    if query:
+        show_search_results(query)
     
-    # 탭 생성
-    tab_names = ["검색 결과", "업종별 종목", "인기 종목"]
+    # 탭 구성
+    tab_market, tab_sector, tab_popular = st.tabs(["전체 시장", "업종별", "인기 종목"])
     
-    # 탭 선택 UI - 탭 설정 개선
-    # key에 값이 바뀌는 session_state를 사용하지 않고 고정 문자열 사용
-    selected_tab_index = st.session_state.stock_tab_index
-    selected_tab = st.radio(
-        "주식 탭 선택", 
-        tab_names, 
-        index=selected_tab_index,
-        horizontal=True, 
-        label_visibility="collapsed",
-        key="stock_tabs_radio"  # 고정된 key 사용
-    )
+    with tab_market:
+        st.subheader("전체 시장")
+        
+        # 여기에 시장 정보를 가져와서 표시하는 코드를 추가하세요
+        # 예: KOSPI, KOSDAQ 지수 등
+        
+        # 임시 메시지
+        st.info("시장 정보 섹션입니다.")
     
-    # 탭 선택이 변경되었는지 확인
-    if tab_names.index(selected_tab) != st.session_state.stock_tab_index:
-        st.session_state.stock_tab_index = tab_names.index(selected_tab)
-        st.rerun()  # 탭 변경 시 재실행하여 UI 즉시 업데이트
-    
-    # 선택된 탭에 따라 내용 표시
-    if selected_tab == "검색 결과":
-        if query:
-            show_search_results(query)
-            # 검색 수행 후 플래그 초기화
-            st.session_state.search_triggered = False
-        else:
-            # 검색어가 없을 때는 인기 종목을 표시하지 않고 검색 안내 메시지만 표시
-            st.info("종목명 또는 종목코드를 입력하고 검색 버튼을 클릭하세요.")
-    elif selected_tab == "업종별 종목":
+    with tab_sector:
+        st.subheader("업종별 종목")
         show_sector_stocks()
-    elif selected_tab == "인기 종목":
+    
+    with tab_popular:
+        st.subheader("인기 종목")
         show_popular_stocks()
+    
+    # 종목 코드가 있는 경우, 해당 종목 상세 정보 표시
+    if st.session_state.stock_code:
+        st.divider()
+        show_stock_detail(st.session_state.stock_code)
 
 def show_search_results(query: str):
     """검색 결과 표시"""
@@ -862,3 +840,11 @@ def show_stock_detail(code: str):
                 st.error(f"종목코드 {code}에 해당하는 정보를 찾을 수 없습니다.")
         except Exception as e:
             st.error(f"종목 상세 정보 조회 중 오류가 발생했습니다: {str(e)}")
+
+# __init__.py에서 호출하는 함수 이름과 일치시키기 위한 별칭 함수
+def render_stocks_page():
+    """
+    주식 정보 페이지 렌더링 (리팩토링 호환용)
+    기존 show 함수를 호출합니다.
+    """
+    return show()

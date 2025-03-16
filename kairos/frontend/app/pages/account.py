@@ -76,4 +76,12 @@ def show():
             if fig2:
                 st.plotly_chart(fig2, use_container_width=True)
     else:
-        st.info("보유 종목이 없어 차트를 표시할 수 없습니다.") 
+        st.info("보유 종목이 없어 차트를 표시할 수 없습니다.")
+
+# __init__.py에서 호출하는 함수 이름과 일치시키기 위한 별칭 함수
+def render_account_page():
+    """
+    계좌 정보 페이지 렌더링 (리팩토링 호환용)
+    기존 show 함수를 호출합니다.
+    """
+    return show() 

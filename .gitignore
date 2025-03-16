@@ -43,6 +43,8 @@ npm-debug.log*
 
 # 임시 파일
 *.tmp
+data/
+*/data/
 *.bak
 *.backup
 *~
@@ -59,3 +61,5 @@ build/
 # 프로젝트 특정 파일/디렉토리
 kis_api_docs/
 kis_api_source/
+token.json
+roadmap.txt

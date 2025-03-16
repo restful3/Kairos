@@ -3,7 +3,11 @@ import numpy as np
 from datetime import datetime, timedelta
 import random
 import json
+import logging
 from app.api.client import api_client  # API 클라이언트 임포트
+
+# 로깅 설정
+logger = logging.getLogger("backtest_utils")
 
 def run_backtest_simulation(strategy, days=90, initial_capital=10000000, fee_rate=0.0015, simplified=False, use_real_data=True):
     """
@@ -20,8 +24,13 @@ def run_backtest_simulation(strategy, days=90, initial_capital=10000000, fee_rat
     Returns:
         dict: 백테스팅 결과
     """
+    # 종목 코드 유효성 검사
+    stock_code = strategy.get('stock_code', '')
+    if not stock_code or not stock_code.strip():
+        raise ValueError("종목 코드가 비어있습니다. 유효한 종목 코드를 설정해주세요.")
+    
     # 주가 데이터 가져오기
-    stock_data = generate_stock_data(strategy['stock_code'], days, use_real_data)
+    stock_data = generate_stock_data(stock_code, days, use_real_data)
     
     # 전략 유형에 따른 매매 신호 생성
     signals = generate_trade_signals(stock_data, strategy)
@@ -89,10 +98,17 @@ def generate_stock_data(stock_code, days, use_real_data=True):
     Returns:
         pd.DataFrame: 주가 데이터
     """
+    # 종목 코드 유효성 검사
+    if not stock_code or not isinstance(stock_code, str) or not stock_code.strip():
+        logger.error("유효하지 않은 종목 코드입니다: '%s'", stock_code)
+        raise ValueError(f"유효하지 않은 종목 코드입니다: '{stock_code}'")
+    
+    # 종목 코드에서 공백 제거
+    stock_code = stock_code.strip()
     
     if use_real_data:
         try:
-            print(f"종목코드 {stock_code}의 {days}일간 실제 데이터를 가져옵니다.")
+            logger.info(f"종목코드 {stock_code}의 {days}일간 실제 데이터를 가져옵니다.")
             # API 클라이언트를 통해 실제 데이터 호출
             stock_history = api_client.get_stock_history(stock_code, days)
             
@@ -100,39 +116,56 @@ def generate_stock_data(stock_code, days, use_real_data=True):
                 # API 응답 형식에 따라 데이터 변환
                 data = []
                 for item in stock_history:
-                    # 날짜 형식 변환 (YYYYMMDD -> datetime)
-                    date_str = item.get('stck_bsop_date', '')
-                    if len(date_str) == 8:
-                        date = datetime.strptime(date_str, '%Y%m%d')
-                    else:
-                        date = datetime.strptime(date_str, '%Y-%m-%d')
-                    
-                    data.append({
-                        'date': date,
-                        'open': int(item.get('stck_oprc', 0)),
-                        'high': int(item.get('stck_hgpr', 0)),
-                        'low': int(item.get('stck_lwpr', 0)),
-                        'close': int(item.get('stck_clpr', 0)),
-                        'volume': int(item.get('acml_vol', 0))
-                    })
+                    try:
+                        # 날짜 형식 변환 (YYYYMMDD -> datetime)
+                        date_str = item.get('stck_bsop_date', '')
+                        if not date_str:
+                            continue
+                            
+                        if len(date_str) == 8:
+                            date = datetime.strptime(date_str, '%Y%m%d')
+                        else:
+                            date = datetime.strptime(date_str, '%Y-%m-%d')
+                        
+                        # 숫자 필드 변환 시 정수 형변환 오류 방지
+                        open_price = int(item.get('stck_oprc', 0) or 0)
+                        high_price = int(item.get('stck_hgpr', 0) or 0)
+                        low_price = int(item.get('stck_lwpr', 0) or 0)
+                        close_price = int(item.get('stck_clpr', 0) or 0)
+                        volume = int(item.get('acml_vol', 0) or 0)
+                        
+                        data.append({
+                            'date': date,
+                            'open': open_price,
+                            'high': high_price,
+                            'low': low_price,
+                            'close': close_price,
+                            'volume': volume
+                        })
+                    except Exception as e:
+                        logger.warning(f"데이터 항목 처리 중 오류 발생: {str(e)}")
+                        continue
                 
                 # 데이터프레임으로 변환 및 날짜순 정렬
-                df = pd.DataFrame(data)
-                df = df.sort_values('date')
-                
-                print(f"실제 데이터 로드 완료: {len(df)}개의 주가 데이터")
-                
-                # 충분한 데이터가 있는지 확인
-                if len(df) >= 10:  # 최소 10일치 데이터 필요
-                    return df
+                if data:
+                    df = pd.DataFrame(data)
+                    df = df.sort_values('date')
+                    
+                    logger.info(f"실제 데이터 로드 완료: {len(df)}개의 주가 데이터")
+                    
+                    # 충분한 데이터가 있는지 확인
+                    if len(df) >= 10:  # 최소 10일치 데이터 필요
+                        return df
+                    else:
+                        logger.warning("가져온 데이터가 충분하지 않아 시뮬레이션 데이터로 대체합니다.")
                 else:
-                    print("가져온 데이터가 충분하지 않아 시뮬레이션 데이터로 대체합니다.")
+                    logger.warning("API에서 데이터를 가져왔으나 처리 가능한 항목이 없습니다.")
         except Exception as e:
-            print(f"실제 데이터 로딩 중 오류 발생: {str(e)}")
-            print("시뮬레이션 데이터로 대체합니다.")
+            logger.error(f"실제 데이터 로딩 중 오류 발생: {str(e)}")
+            logger.info("시뮬레이션 데이터로 대체합니다.")
     
     # 실제 데이터를 가져오지 못했거나 시뮬레이션 데이터를 요청한 경우
-    print(f"종목코드 {stock_code}의 {days}일간 시뮬레이션 데이터를 생성합니다.")
+    logger.info(f"종목코드 {stock_code}의 {days}일간 시뮬레이션 데이터를 생성합니다.")
     
     # 시뮬레이션 데이터 생성
     end_date = datetime.now()
@@ -144,10 +177,20 @@ def generate_stock_data(stock_code, days, use_real_data=True):
     dates = pd.date_range(start=start_date, periods=business_days, freq='B')
     
     # 시드 고정으로 같은 종목은 같은 패턴 생성
-    np.random.seed(int(stock_code[-2:]))
+    try:
+        # 종목코드의 마지막 두 자리를 시드로 사용 (숫자가 아닌 경우 대체 방법 사용)
+        seed = int(stock_code[-2:]) if stock_code[-2:].isdigit() else sum(ord(c) for c in stock_code)
+        np.random.seed(seed)
+    except Exception as e:
+        logger.warning(f"시드 설정 중 오류 발생, 기본 시드 사용: {str(e)}")
+        np.random.seed(42)  # 기본 시드
     
     # 초기 가격 설정 (종목코드에 따라 다르게)
-    start_price = 50000 + int(stock_code[-2:]) * 1000
+    try:
+        seed_value = int(stock_code[-2:]) if stock_code[-2:].isdigit() else sum(ord(c) for c in stock_code) % 100
+        start_price = 50000 + seed_value * 1000
+    except Exception:
+        start_price = 50000  # 기본값
     
     # 추세 성분 (약간의 상승세)
     trend = np.linspace(0, days * 0.1, business_days)
@@ -189,7 +232,7 @@ def generate_stock_data(stock_code, days, use_real_data=True):
     # 데이터프레임으로 변환
     df = pd.DataFrame(data)
     
-    print(f"임시 데이터 생성 완료: {len(df)}개의 주가 데이터")
+    logger.info(f"임시 데이터 생성 완료: {len(df)}개의 주가 데이터")
     return df
 
 

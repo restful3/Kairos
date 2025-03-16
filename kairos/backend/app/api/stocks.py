@@ -42,21 +42,6 @@ async def get_popular_stocks(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"인기 종목 조회 중 오류 발생: {str(e)}")
 
-@router.get("/{code}")
-async def get_stock_detail(
-    code: str,
-    current_user: Dict[str, Any] = Depends(get_current_user)
-) -> Dict[str, Any]:
-    """
-    종목 상세 정보 API
-    
-    종목코드로 해당 종목의 상세 정보를 조회합니다.
-    """
-    stock = stock_service.get_stock_by_code(code)
-    if not stock:
-        raise HTTPException(status_code=404, detail=f"종목코드 {code}에 해당하는 종목을 찾을 수 없습니다.")
-    return stock
-
 @router.get("/sector/{sector}")
 async def get_stocks_by_sector(
     sector: str,
@@ -90,4 +75,24 @@ async def get_stock_daily_prices(
         results = stock_service.get_stock_daily_prices(code, start_date, end_date)
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"종목 일별 시세 조회 중 오류 발생: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"종목 일별 시세 조회 중 오류 발생: {str(e)}")
+
+@router.get("/{code}")
+async def get_stock_detail(
+    code: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    종목 상세 정보 API
+    
+    종목코드로 해당 종목의 상세 정보를 조회합니다.
+    """
+    try:
+        stock = stock_service.get_stock_by_code(code)
+        if not stock:
+            raise HTTPException(status_code=404, detail=f"종목코드 {code}에 해당하는 종목을 찾을 수 없습니다.")
+        return stock
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"종목 상세 정보 조회 중 오류 발생: {str(e)}") 

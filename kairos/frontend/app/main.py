@@ -6,8 +6,8 @@ from app.utils.session import init_session_state, is_logged_in
 from app.pages.login import show as show_login
 from app.pages.account import show as show_account
 from app.pages.stocks import show as show_stocks
-from app.pages.strategy_builder import show as show_strategy_builder
-from app.pages.backtest import show as show_backtest
+from app.pages.strategy import render as show_strategy
+from app.pages.backtest import render as show_backtest
 
 # 환경 변수 로드
 load_dotenv()
@@ -26,23 +26,36 @@ def main():
     # 세션 초기화
     init_session_state()
     
-    # 페이지 자동 이동 처리
-    page_to_navigate = st.session_state.get("page", None)
-    if page_to_navigate and is_logged_in():
-        # 페이지 이동 후 상태 초기화
-        current_page = page_to_navigate
-        del st.session_state.page
+    # 강제 리프레시 처리
+    if st.session_state.get("force_refresh", False):
+        # 강제 리프레시 플래그가 설정되어 있으면 캐시 관련 상태 초기화
+        for key in ['strategies', 'saved_strategies']:
+            if key in st.session_state:
+                del st.session_state[key]
         
-        # 메뉴 선택 상태 업데이트
-        if current_page == "백테스팅":
-            st.session_state.menu_index = 3  # 백테스팅 메뉴 인덱스
-        elif current_page == "전략 생성":
-            st.session_state.menu_index = 2  # 전략 생성 메뉴 인덱스
-        else:
-            st.session_state.menu_index = 0  # 기본 메뉴 인덱스
+        # 플래그 초기화
+        st.session_state.force_refresh = False
+    
+    # 페이지 자동 이동 처리
+    current_page = st.session_state.get("current_page", None)
     
     # 항상 현재 메뉴 인덱스 설정 (이전 상태 유지 또는 기본값)
     current_menu_index = st.session_state.get("menu_index", 0)
+    
+    # 현재 페이지에 따라 메뉴 인덱스 설정
+    if current_page and is_logged_in():
+        if current_page == "backtest":
+            # 백테스팅 메뉴 인덱스
+            current_menu_index = 3
+        elif current_page == "strategy":
+            # 전략 관리 메뉴 인덱스
+            current_menu_index = 2
+        elif current_page == "stocks":
+            # 종목 검색 메뉴 인덱스
+            current_menu_index = 1
+        elif current_page == "account":
+            # 계좌 정보 메뉴 인덱스
+            current_menu_index = 0
     
     # 사이드바 메뉴
     with st.sidebar:
@@ -53,7 +66,7 @@ def main():
         # 로그인 상태에 따라 메뉴 표시
         if is_logged_in():
             # 네비게이션 메뉴
-            menu_options = ["계좌 정보", "종목 검색", "전략 생성", "백테스팅", "거래 내역", "도움말"]
+            menu_options = ["계좌 정보", "종목 검색", "전략 관리", "백테스팅", "거래 내역", "도움말"]
             
             # 메뉴 선택
             menu = st.radio(
@@ -79,21 +92,28 @@ def main():
             menu = "로그인"
             st.info("서비스를 이용하려면 로그인이 필요합니다.")
     
-    # 선택한 메뉴에 따라 페이지 표시
+    # 선택한 메뉴에 따라 페이지 표시 및 세션 상태 업데이트
     if menu == "로그인" or not is_logged_in():
+        st.session_state.current_page = "login"
         show_login()
     elif menu == "계좌 정보":
+        st.session_state.current_page = "account"
         show_account()
     elif menu == "종목 검색":
+        st.session_state.current_page = "stocks"
         show_stocks()
-    elif menu == "전략 생성":
-        show_strategy_builder()
+    elif menu == "전략 관리":
+        st.session_state.current_page = "strategy"
+        show_strategy()
     elif menu == "백테스팅":
+        st.session_state.current_page = "backtest"
         show_backtest()
     elif menu == "거래 내역":
+        st.session_state.current_page = "history"
         st.title("거래 내역")
         st.info("거래 내역 페이지는 개발 중입니다.")
     elif menu == "도움말":
+        st.session_state.current_page = "help"
         st.title("도움말")
         st.markdown("""
         ## Kairos 플랫폼 사용법
@@ -104,8 +124,9 @@ def main():
         1. 로그인 페이지에서 사용자 아이디와 비밀번호를 입력합니다.
         2. 계좌 정보 페이지에서 현재 보유 주식과 잔고를 확인합니다.
         3. 종목 검색 페이지에서 투자할 종목을 검색하고 포트폴리오에 추가합니다.
-        4. 자동 매매 설정 페이지에서 자동 매매 규칙을 설정합니다.
-        5. 거래 내역 페이지에서 과거 거래 내역을 확인합니다.
+        4. 전략 관리 페이지에서 투자 전략을 생성하고 백테스팅합니다.
+        5. 백테스팅 페이지에서 전략의 과거 성과를 분석합니다.
+        6. 거래 내역 페이지에서 과거 거래 내역을 확인합니다.
         
         ### 주의사항
         - 실제 자산이 거래되므로 신중하게 사용하세요.

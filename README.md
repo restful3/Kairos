@@ -8,6 +8,10 @@
 
 이 프로젝트는 [한국투자증권의 Open Trading API](https://github.com/koreainvestment/open-trading-api)를 활용한 실시간 퀀트 트레이딩 시스템으로, 사용자 친화적인 인터페이스와 강력한 백엔드 시스템을 통해 효율적인 트레이딩 환경을 제공합니다. 공식 API 예제와 문서를 참고하여 개발되었으며, 실제 트레이딩에 적합한 형태로 기능을 확장하였습니다.
 
+프로젝트는 두 부분으로 구성됩니다:
+- **아트라스(Atlas)**: 백엔드 시스템, FastAPI 기반으로 개발됨
+- **헤르메스(Hermes)**: 프론트엔드 시스템, Streamlit 기반으로 개발됨
+
 ## ✨ 주요 기능
 
 ### 🔐 보안 강화된 인증 시스템
@@ -37,13 +41,13 @@
 
 ## 🛠️ 기술 스택
 
-### 백엔드
+### 백엔드 (아트라스)
 - **FastAPI**: 고성능 비동기 API 서버
 - **JWT**: 보안 토큰 기반 인증
 - **SQLAlchemy**: 데이터베이스 ORM
 - **Pydantic**: 데이터 검증 및 설정 관리
 
-### 프론트엔드
+### 프론트엔드 (헤르메스)
 - **Streamlit**: 데이터 중심 대시보드
 - **Plotly**: 인터랙티브 차트 및 시각화
 - **Pandas**: 데이터 분석 및 처리
@@ -81,14 +85,18 @@ python run.py
 
 ## 👥 사용자 관리
 
-Kairos는 관리자용 CLI 도구를 제공하여 사용자를 쉽게 관리할 수 있습니다:
+Kairos는 백엔드(아트라스)에서 관리자용 CLI 도구를 제공하여 사용자를 쉽게 관리할 수 있습니다:
 
 ```bash
 # 백엔드 디렉토리에서
 python admin.py create -u 사용자명      # 일반 사용자 생성
 python admin.py create -u 관리자명 --admin  # 관리자 사용자 생성
 python admin.py list                   # 사용자 목록 조회
+python admin.py passwd -u 사용자명      # 비밀번호 변경
+python admin.py delete -u 사용자명      # 사용자 삭제
 ```
+
+모든 사용자 데이터는 `~/.quant_trading_backend/users.json` 파일에 안전하게 저장됩니다.
 
 ## 📝 환경 설정
 
@@ -97,25 +105,50 @@ python admin.py list                   # 사용자 목록 조회
 1. 백엔드와 프론트엔드 디렉토리에 있는 `.env.example` 파일을 복사하여 `.env` 파일 생성
 2. 필요한 설정값 입력 (API URL, 시크릿 키 등)
 
+### 백엔드(아트라스) .env 설정
+`.env.example` 파일을 참고하여 한국투자증권 API 키 및 기타 설정을 구성합니다.
+
+### 프론트엔드(헤르메스) .env 설정
+기본적인 설정은 다음과 같습니다:
+```
+# API 서버 설정
+API_URL=http://localhost:8000/api
+```
+
 ## 💡 프로젝트 구조
 
 ```
 kairos/
-├── backend/           # FastAPI 백엔드
+├── backend/           # 아트라스(Atlas) - FastAPI 백엔드
 │   ├── app/           # 애플리케이션 코드
 │   │   ├── api/       # API 엔드포인트
 │   │   ├── core/      # 핵심 기능 (설정, 보안)
+│   │   ├── models/    # 데이터 모델
+│   │   ├── schemas/   # 데이터 스키마  
 │   │   ├── services/  # 비즈니스 로직
 │   │   └── utils/     # 유틸리티 함수
+│   ├── data/          # 데이터 저장소
+│   ├── tests/         # 테스트 코드
 │   ├── admin.py       # 관리자 CLI 도구
-│   └── run.py         # 서버 실행 스크립트
+│   ├── main.py        # 메인 애플리케이션 진입점
+│   ├── run.py         # 서버 실행 스크립트
+│   ├── requirements.txt # 의존성 패키지 목록
+│   └── .env.example   # 환경 변수 예시 파일
 │
-└── frontend/          # Streamlit 프론트엔드
-    ├── app/           # 애플리케이션 코드
-    │   ├── components/# UI 컴포넌트
-    │   ├── pages/     # 페이지 정의
-    │   └── utils/     # 유틸리티 함수
-    └── run.py         # 서버 실행 스크립트
+├── frontend/          # 헤르메스(Hermes) - Streamlit 프론트엔드
+│   ├── app/           # 애플리케이션 코드
+│   │   ├── components/# UI 컴포넌트
+│   │   ├── pages/     # 페이지 정의
+│   │   └── utils/     # 유틸리티 함수
+│   ├── data/          # 데이터 저장소
+│   ├── services/      # 서비스 로직
+│   ├── stock_data/    # 주식 데이터
+│   ├── tests/         # 테스트 코드
+│   ├── run.py         # 서버 실행 스크립트
+│   ├── requirements.txt # 의존성 패키지 목록
+│   └── .env.example   # 환경 변수 예시 파일
+│
+└── docker-compose.yml # Docker 컴포즈 설정 파일
 ```
 
 ## ⚠️ 주의사항
