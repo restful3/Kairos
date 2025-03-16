@@ -42,22 +42,56 @@
 ## 🛠️ 기술 스택
 
 ### 백엔드 (아트라스)
-- **FastAPI**: 고성능 비동기 API 서버
-- **JWT**: 보안 토큰 기반 인증
-- **SQLAlchemy**: 데이터베이스 ORM
-- **Pydantic**: 데이터 검증 및 설정 관리
+- **FastAPI v0.103.1**: 고성능 비동기 API 서버
+- **Python-Jose v3.3.0 & PyJWT v2.8.0**: 토큰 기반 인증
+- **Passlib v1.7.4 & Bcrypt v4.0.1**: 안전한 비밀번호 관리
+- **Pydantic v2.5.2**: 데이터 검증 및 설정 관리
+- **Pandas v2.1.3 & Numpy v1.26.4**: 데이터 처리
+- **Ta-lib v0.6.3**: 테크니컬 인디케이터 계산
 
 ### 프론트엔드 (헤르메스)
-- **Streamlit**: 데이터 중심 대시보드
-- **Plotly**: 인터랙티브 차트 및 시각화
-- **Pandas**: 데이터 분석 및 처리
+- **Streamlit v1.29.0**: 데이터 중심 대시보드
+- **Streamlit-Aggrid v1.1.1**: 고급 데이터 테이블
+- **Plotly v5.18.0**: 인터랙티브 차트 및 시각화
+- **Pandas v2.1.3 & Numpy v1.24.3**: 데이터 분석 및 처리
+- **Altair v5.5.0**: 선언적 시각화 라이브러리
 
 ## 🚀 시작하기
 
 ### 사전 요구사항
-- Python 3.8 이상
+- Python 3.8 이상 (개발 환경: Python 3.10 권장)
 - 한국투자증권 계정 및 API 키 (실전 또는 모의투자)
 - Linux, macOS 또는 Windows 환경
+- Ta-lib 설치 (시스템에 따라 별도 과정 필요)
+
+### Ta-lib 설치 방법
+
+**Ubuntu/Debian 환경:**
+```bash
+# 의존성 설치
+sudo apt-get update
+sudo apt-get install -y build-essential
+
+# ta-lib 소스 설치
+wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
+tar -xzf ta-lib-0.4.0-src.tar.gz
+cd ta-lib/
+./configure --prefix=/usr
+make
+sudo make install
+cd ..
+```
+
+**macOS 환경:**
+```bash
+# Homebrew로 설치
+brew install ta-lib
+```
+
+**Windows 환경:**
+- Windows에서는 미리 컴파일된 whl 파일을 다운로드하여 설치해야 함
+- [여기](https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib)에서 Python 버전에 맞는 whl 파일 다운로드
+- `pip install [다운로드한 파일 경로]` 명령으로 설치
 
 ### 빠른 설치
 
@@ -68,15 +102,15 @@ cd Kairos
 
 # 백엔드 설정 및 실행
 cd kairos/backend
-python -m venv ~/.venvs/kairos-backend
-source ~/.venvs/kairos-backend/bin/activate
+python -m venv ~/.venvs/atlas
+source ~/.venvs/atlas/bin/activate  # Windows: .\.venvs\atlas\Scripts\activate
 pip install -r requirements.txt
 python run.py
 
 # 새 터미널에서 프론트엔드 설정 및 실행
 cd kairos/frontend
-python -m venv ~/.venvs/kairos-frontend
-source ~/.venvs/kairos-frontend/bin/activate
+python -m venv ~/.venvs/hermes
+source ~/.venvs/hermes/bin/activate  # Windows: .\.venvs\hermes\Scripts\activate
 pip install -r requirements.txt
 python run.py
 ```
@@ -107,6 +141,19 @@ python admin.py delete -u 사용자명      # 사용자 삭제
 
 ### 백엔드(아트라스) .env 설정
 `.env.example` 파일을 참고하여 한국투자증권 API 키 및 기타 설정을 구성합니다.
+
+```
+# 한국투자증권 API 설정
+KIS_ACCOUNT_NO=계좌번호
+KIS_ACCOUNT_CODE=계좌상품코드
+KIS_APP_KEY=발급받은_앱키
+KIS_APP_SECRET=발급받은_시크릿키
+KIS_ENVIRONMENT=시뮬레이션 또는 실전
+
+# 보안 설정
+SECRET_KEY=임의의_보안키
+TOKEN_EXPIRE_MINUTES=60
+```
 
 ### 프론트엔드(헤르메스) .env 설정
 기본적인 설정은 다음과 같습니다:
@@ -150,6 +197,36 @@ kairos/
 │
 └── docker-compose.yml # Docker 컴포즈 설정 파일
 ```
+
+## 📦 패키지 의존성
+
+### 백엔드 (아트라스) 핵심 의존성
+```
+fastapi==0.103.1
+uvicorn==0.23.2
+pydantic==2.5.2
+pandas==2.1.3
+numpy==1.26.4
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==4.0.1
+python-dotenv==1.0.0
+ta-lib==0.6.3
+```
+
+### 프론트엔드 (헤르메스) 핵심 의존성
+```
+streamlit==1.29.0
+streamlit-aggrid==1.1.1
+pandas==2.1.3
+numpy==1.24.3
+plotly==5.18.0
+altair==5.5.0
+requests==2.31.0
+python-dotenv==1.0.0
+```
+
+전체 의존성 목록은 각 디렉토리의 `requirements.txt` 파일을 참조하세요.
 
 ## ⚠️ 주의사항
 
